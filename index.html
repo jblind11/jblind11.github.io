@@ -11,7 +11,7 @@
     font-family: -apple-system, BlinkMacSystemFont, "Malgun Gothic", sans-serif;
     background: #f2f3f5;
     color: #222;
-    padding-bottom: 100px;
+    padding-bottom: 150px;
   }
   header {
     background: #2d3436;
@@ -98,29 +98,33 @@
   }
   .btn-camera { background: #0984e3; color: #fff; }
   .btn-upload { background: #dfe6e9; color: #2d3436; }
-  .thumbs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .thumbs { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 12px; }
   .thumb-wrap { position: relative; width: 72px; height: 72px; }
   .thumb-wrap img {
     width: 72px; height: 72px; object-fit: cover; border-radius: 8px; border: 1px solid #ddd;
   }
   .thumb-del {
-    position: absolute; top: -6px; right: -6px;
-    width: 20px; height: 20px; border-radius: 50%;
-    background: #d63031; color: #fff; border: none;
-    font-size: 12px; line-height: 20px; text-align: center; padding: 0; cursor: pointer;
+    position: absolute; top: -8px; right: -8px;
+    width: 26px; height: 26px; border-radius: 50%;
+    background: #d63031; color: #fff; border: 2px solid #fff;
+    font-size: 15px; line-height: 22px; text-align: center; padding: 0; cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.25);
   }
   input[type=file] { display: none; }
   .footer-bar {
     position: fixed;
     bottom: 0; left: 0; right: 0;
     background: #fff;
-    padding: 12px 16px;
+    padding: 10px 16px;
     box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
-    display: flex;
-    gap: 8px;
     max-width: 480px;
     margin: 0 auto;
   }
+  .footer-row {
+    display: flex;
+    gap: 8px;
+  }
+  .footer-row + .footer-row { margin-top: 8px; }
   .btn-main {
     flex: 1;
     padding: 14px;
@@ -131,12 +135,13 @@
     cursor: pointer;
   }
   .btn-save { background: #00b894; color: #fff; }
-  .btn-reset { background: #b2bec3; color: #fff; flex: 0 0 72px; }
+  .btn-share { background: #0984e3; color: #fff; }
+  .btn-reset { background: #b2bec3; color: #fff; flex: 0 0 60px; }
   .btn-help {
     background: #dfe6e9;
     color: #2d3436;
-    flex: 0 0 48px;
-    font-size: 18px;
+    flex: 0 0 44px;
+    font-size: 16px;
   }
   .modal-overlay {
     position: fixed;
@@ -210,13 +215,18 @@
 
   <div id="categoryList"></div>
 
-  <div class="hint">사진은 원본 그대로 보관돼요. "모아서 저장/공유"를 누르면 카테고리별로 정렬 + 워터마크 적용 후 세로로 이어붙인 이미지 1장으로 저장/공유됩니다.</div>
+  <div class="hint">사진은 원본 그대로 보관돼요. "저장" 또는 "공유"를 누르면 카테고리별로 정렬 + 워터마크 적용 후 세로로 이어붙인 이미지 1장으로 처리됩니다.</div>
 </div>
 
 <div class="footer-bar">
-  <button class="btn-main btn-help" onclick="openHelp()" title="사용 설명서">❓</button>
-  <button class="btn-main btn-reset" onclick="resetAll()">초기화</button>
-  <button class="btn-main btn-save" onclick="saveAll()">모아서 저장/공유</button>
+  <div class="footer-row">
+    <button class="btn-main btn-save" onclick="saveOnly()">💾 저장</button>
+    <button class="btn-main btn-share" onclick="shareOnly()">📤 공유</button>
+  </div>
+  <div class="footer-row">
+    <button class="btn-main btn-help" onclick="openHelp()" title="사용 설명서">❓</button>
+    <button class="btn-main btn-reset" onclick="resetAll()">초기화</button>
+  </div>
 </div>
 
 <div class="modal-overlay" id="helpModal" onclick="if(event.target===this) closeHelp()">
@@ -234,14 +244,17 @@
       <li>썸네일 오른쪽 위 <b>×</b> 를 누르면 삭제됩니다.</li>
     </ul>
 
-    <h3>3. 모아서 저장/공유</h3>
-    <p>버튼을 누르면 다음이 자동으로 처리됩니다.</p>
+    <h3>3. 저장 / 공유</h3>
+    <p>두 버튼 모두 다음 과정을 동일하게 거친 뒤, 마지막 처리만 다릅니다.</p>
     <ol>
-      <li>각 사진 하단에 <b>작업 제목 + 촬영 날짜/시간</b> 워터마크 삽입</li>
+      <li>각 사진 하단에 <b>작업 제목 + 버튼을 누른 시각</b> 워터마크 삽입</li>
       <li>항목 순서(1→2→3→4)대로 정렬하고 구분 라벨 추가</li>
       <li>전체를 세로로 이어붙여 <b>이미지 1장</b>으로 합성</li>
-      <li>공유 시트가 열리면 카카오톡 · Teams · 메일 등으로 바로 전송</li>
     </ol>
+    <ul>
+      <li><b>💾 저장</b> — 완성된 이미지를 폰(갤러리/다운로드 폴더)에 바로 저장</li>
+      <li><b>📤 공유</b> — 공유 시트를 열어 카카오톡 · Teams · 메일 등으로 바로 전송 (파일로 남기지 않고 바로 보낼 때 사용)</li>
+    </ul>
 
     <h3>4. 초기화</h3>
     <p>입력한 제목과 촬영한 사진을 모두 지웁니다.</p>
@@ -266,7 +279,7 @@
 
 <script>
 // 업데이트 시 이 값만 바꾸고 파일을 재배포하세요.
-const APP_VERSION = 'v1.4';
+const APP_VERSION = 'v1.6';
 const APP_UPDATED = '2026-08-31';
 
 const CATEGORIES = [
@@ -331,6 +344,257 @@ function handleFile(event, catId) {
   });
 }
 
+function formatDate(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  return `${y}-${m}-${day} ${hh}:${mm}`;
+}
+
+function renderThumbs(catId) {
+  const wrap = document.getElementById('thumbs_' + catId);
+  wrap.innerHTML = '';
+  photos[catId].forEach((p, idx) => {
+    const t = document.createElement('div');
+    t.className = 'thumb-wrap';
+    t.innerHTML = `<img src="${p.previewUrl}"><button class="thumb-del" onclick="deletePhoto('${catId}', ${idx})">×</button>`;
+    wrap.appendChild(t);
+  });
+}
+
+function deletePhoto(catId, idx) {
+  photos[catId].splice(idx, 1);
+  renderThumbs(catId);
+  updateBadge(catId);
+}
+
+function updateBadge(catId) {
+  render();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => { t.style.display = 'none'; }, 1500);
+}
+
+function openHelp() {
+  document.getElementById('helpModal').classList.add('show');
+}
+
+function closeHelp() {
+  document.getElementById('helpModal').classList.remove('show');
+}
+
+function resetAll() {
+  if (!confirm('모든 사진을 초기화할까요?')) return;
+  CATEGORIES.forEach(c => photos[c.id] = []);
+  document.getElementById('jobTitle').value = '';
+  render();
+}
+
+// ---- 음성 입력 (Web Speech API) ----
+const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognizer = null;
+let isListening = false;
+
+function toggleVoiceInput() {
+  if (!SpeechRecognitionCtor) {
+    alert('이 브라우저는 음성 입력을 지원하지 않습니다. 안드로이드는 Chrome 브라우저 사용을 권장합니다.');
+    return;
+  }
+  if (isListening) {
+    recognizer && recognizer.stop();
+    return;
+  }
+  startVoiceInput();
+}
+
+function startVoiceInput() {
+  recognizer = new SpeechRecognitionCtor();
+  recognizer.lang = 'ko-KR';
+  recognizer.interimResults = false;
+  recognizer.maxAlternatives = 1;
+
+  const micBtn = document.getElementById('micBtn');
+  const titleInput = document.getElementById('jobTitle');
+
+  recognizer.onstart = function() {
+    isListening = true;
+    micBtn.classList.add('listening');
+    showToast('듣고 있어요...');
+  };
+
+  recognizer.onresult = function(event) {
+    const transcript = event.results[0][0].transcript.trim();
+    if (transcript) {
+      titleInput.value = transcript;
+      showToast('입력 완료: ' + transcript);
+    }
+  };
+
+  recognizer.onerror = function(event) {
+    if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+      showToast('마이크 권한을 허용해주세요');
+    } else if (event.error !== 'no-speech' && event.error !== 'aborted') {
+      showToast('음성 인식 오류: ' + event.error);
+    }
+  };
+
+  recognizer.onend = function() {
+    isListening = false;
+    micBtn.classList.remove('listening');
+  };
+
+  recognizer.start();
+}
+
+// 사진들을 워터마크+이어붙이기 처리해서 최종 File 객체를 만드는 공통 함수
+async function renderMergedImage() {
+  const grouped = CATEGORIES.map(cat => ({
+    cat,
+    items: photos[cat.id]
+  })).filter(g => g.items.length > 0);
+
+  if (grouped.length === 0) {
+    alert('저장할 사진이 없습니다.');
+    return null;
+  }
+
+  const title = document.getElementById('jobTitle').value.trim() || '(제목 없음)';
+  // 저장/공유 버튼을 누른 시각으로 모든 워터마크와 파일명을 통일
+  const saveTime = new Date();
+  const saveTimeStr = formatDate(saveTime);
+  showToast('이미지 합성 중...');
+
+  // 공통 폭 결정 (사진 중 가장 큰 폭 기준, 너무 크면 상한)
+  const MAX_WIDTH = 1080;
+  let targetWidth = 0;
+  grouped.forEach(g => g.items.forEach(p => {
+    targetWidth = Math.max(targetWidth, p.rawImg.width);
+  }));
+  targetWidth = Math.min(targetWidth, MAX_WIDTH);
+
+  const labelHeight = Math.round(targetWidth * 0.09);
+  const gap = Math.round(targetWidth * 0.02);
+
+  const workCanvas = document.getElementById('canvasWork');
+  const workCtx = workCanvas.getContext('2d');
+
+  const renderedSections = [];
+
+  grouped.forEach(g => {
+    renderedSections.push({ type: 'label', height: labelHeight, catName: g.cat.name });
+    g.items.forEach(p => {
+      const scale = targetWidth / p.rawImg.width;
+      const h = Math.round(p.rawImg.height * scale);
+
+      workCanvas.width = p.rawImg.width;
+      workCanvas.height = p.rawImg.height;
+      workCtx.drawImage(p.rawImg, 0, 0);
+      const barHeight = Math.max(p.rawImg.height * 0.10, 70);
+      workCtx.fillStyle = 'rgba(0,0,0,0.55)';
+      workCtx.fillRect(0, p.rawImg.height - barHeight, p.rawImg.width, barHeight);
+      const baseFontSize = Math.max(p.rawImg.width * 0.032, 18);
+      workCtx.fillStyle = '#ffffff';
+      workCtx.textBaseline = 'middle';
+      workCtx.font = `bold ${baseFontSize}px sans-serif`;
+      workCtx.fillText(title, p.rawImg.width * 0.04, p.rawImg.height - barHeight * 0.62);
+      workCtx.font = `${baseFontSize * 0.8}px sans-serif`;
+      workCtx.fillText(saveTimeStr, p.rawImg.width * 0.04, p.rawImg.height - barHeight * 0.25);
+
+      const snapshot = new Image();
+      snapshot.src = workCanvas.toDataURL('image/jpeg', 0.92);
+      renderedSections.push({ type: 'photo', height: h, img: snapshot, drawWidth: targetWidth });
+    });
+  });
+
+  await Promise.all(
+    renderedSections
+      .filter(s => s.type === 'photo')
+      .map(s => new Promise(resolve => {
+        if (s.img.complete) resolve();
+        else s.img.onload = resolve;
+      }))
+  );
+
+  const totalHeight = renderedSections.reduce((sum, s) => sum + s.height + gap, 0) + gap;
+
+  const finalCanvas = document.createElement('canvas');
+  finalCanvas.width = targetWidth;
+  finalCanvas.height = totalHeight;
+  const fctx = finalCanvas.getContext('2d');
+  fctx.fillStyle = '#f2f3f5';
+  fctx.fillRect(0, 0, targetWidth, totalHeight);
+
+  let y = gap;
+  renderedSections.forEach(s => {
+    if (s.type === 'label') {
+      fctx.fillStyle = '#2d3436';
+      fctx.fillRect(0, y, targetWidth, s.height);
+      fctx.fillStyle = '#ffffff';
+      fctx.font = `bold ${Math.round(s.height * 0.45)}px sans-serif`;
+      fctx.textBaseline = 'middle';
+      fctx.fillText(s.catName, targetWidth * 0.04, y + s.height / 2);
+    } else {
+      fctx.drawImage(s.img, 0, y, s.drawWidth, s.height);
+    }
+    y += s.height + gap;
+  });
+
+  const finalDataUrl = finalCanvas.toDataURL('image/jpeg', 0.9);
+  const blob = await (await fetch(finalDataUrl)).blob();
+  const safeTitle = title.replace(/[^\w가-힣]/g, '') || '작업사진';
+  const dateForFile = saveTimeStr.replace(/:/g, '').replace(/ /g, '_');
+  const fname = `${safeTitle}_${dateForFile}.jpg`;
+  return { file: new File([blob], fname, { type: 'image/jpeg' }), title, fname };
+}
+
+// 로컬 저장(다운로드)만 수행 - 공유 시트를 열지 않음
+async function saveOnly() {
+  const result = await renderMergedImage();
+  if (!result) return;
+  const { file, fname } = result;
+  const url = URL.createObjectURL(file);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fname;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('이미지가 저장되었습니다');
+}
+
+// 공유 시트만 열기 (카카오톡, Teams 등 다른 앱으로 바로 전달)
+async function shareOnly() {
+  const result = await renderMergedImage();
+  if (!result) return;
+  const { file, title } = result;
+
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: title });
+      return;
+    } catch (e) {
+      // 사용자가 취소한 경우 등은 조용히 종료
+      return;
+    }
+  }
+  alert('이 브라우저는 공유 기능을 지원하지 않습니다. "저장" 버튼으로 다운로드 후 직접 첨부해 주세요.');
+}
+
+document.getElementById('versionTag').textContent = APP_VERSION;
+document.getElementById('versionDetail').textContent = `${APP_VERSION} (업데이트: ${APP_UPDATED}) — 새 버전 안내가 오면 이 파일을 다시 받아 교체해 주세요.`;
+
+render();
+</script>
+</body>
+</html>
 function formatDate(d) {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
