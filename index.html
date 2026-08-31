@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>작업 사진 워터마크</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Malgun Gothic", sans-serif;
+    background: #f2f3f5;
+    color: #222;
+    padding-bottom: 100px;
+  }
+  header {
+    background: #2d3436;
+    color: #fff;
+    padding: 16px;
+    text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  header h1 { margin: 0; font-size: 18px; }
+  header .version { font-size: 11px; color: #b2bec3; margin-top: 3px; }
+  .container { padding: 16px; max-width: 480px; margin: 0 auto; }
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 14px; }
+  .title-input-wrap { position: relative; }
+  .field input[type=text] {
+    width: 100%;
+    padding: 12px;
+    padding-right: 48px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+  }
+  .mic-btn {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: #dfe6e9;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+  .mic-btn.listening {
+    background: #d63031;
+    color: #fff;
+    animation: pulse 1s infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(214,48,49,0.5); }
+    70% { box-shadow: 0 0 0 8px rgba(214,48,49,0); }
+    100% { box-shadow: 0 0 0 0 rgba(214,48,49,0); }
+  }
+  .category {
+    background: #fff;
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  .category-title {
+    font-weight: 700;
+    font-size: 15px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .badge {
+    background: #dfe6e9;
+    color: #636e72;
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+  .badge.done { background: #00b894; color: #fff; }
+  .btn-row { display: flex; gap: 8px; margin-bottom: 8px; }
+  .btn {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn-camera { background: #0984e3; color: #fff; }
+  .btn-upload { background: #dfe6e9; color: #2d3436; }
+  .thumbs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .thumb-wrap { position: relative; width: 72px; height: 72px; }
+  .thumb-wrap img {
+    width: 72px; height: 72px; object-fit: cover; border-radius: 8px; border: 1px solid #ddd;
+  }
+  .thumb-del {
+    position: absolute; top: -6px; right: -6px;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: #d63031; color: #fff; border: none;
+    font-size: 12px; line-height: 20px; text-align: center; padding: 0; cursor: pointer;
+  }
+  input[type=file] { display: none; }
+  .footer-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: #fff;
+    padding: 12px 16px;
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+    display: flex;
+    gap: 8px;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  .btn-main {
+    flex: 1;
+    padding: 14px;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .btn-save { background: #00b894; color: #fff; }
+  .btn-reset { background: #b2bec3; color: #fff; flex: 0 0 72px; }
+  .btn-help {
+    background: #dfe6e9;
+    color: #2d3436;
+    flex: 0 0 48px;
+    font-size: 18px;
+  }
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-box {
+    background: #fff;
+    border-radius: 14px;
+    max-width: 420px;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 20px;
+  }
+  .modal-box h2 {
+    margin: 0 0 12px;
+    font-size: 17px;
+  }
+  .modal-box h3 {
+    font-size: 14px;
+    margin: 16px 0 6px;
+    color: #0984e3;
+  }
+  .modal-box p, .modal-box li {
+    font-size: 13px;
+    line-height: 1.6;
+    color: #444;
+    margin: 4px 0;
+  }
+  .modal-box ol, .modal-box ul { padding-left: 20px; margin: 4px 0; }
+  .modal-close {
+    width: 100%;
+    margin-top: 18px;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    background: #2d3436;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .hint { font-size: 12px; color: #888; margin-top: 4px; }
+  #canvasWork { display: none; }
+  .toast {
+    position: fixed; top: 70px; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,0.8); color: #fff; padding: 10px 18px; border-radius: 20px;
+    font-size: 13px; z-index: 999; display: none;
+  }
+</style>
+</head>
+<body>
+
+<header><h1>📷 작업 사진 워터마크</h1><div class="version" id="versionTag"></div></header>
+
+<div class="container">
+  <div class="field">
+    <label>작업 제목</label>
+    <div class="title-input-wrap">
+      <input type="text" id="jobTitle" placeholder="예: 3층 회의실 블라인드 교체">
+      <button type="button" class="mic-btn" id="micBtn" onclick="toggleVoiceInput()">🎤</button>
+    </div>
+  </div>
+
+  <div id="categoryList"></div>
+
+  <div class="hint">사진은 원본 그대로 보관돼요. "모아서 저장/공유"를 누르면 카테고리별로 정렬 + 워터마크 적용 후 세로로 이어붙인 이미지 1장으로 저장/공유됩니다.</div>
+</div>
+
+<div class="footer-bar">
+  <button class="btn-main btn-help" onclick="openHelp()" title="사용 설명서">❓</button>
+  <button class="btn-main btn-reset" onclick="resetAll()">초기화</button>
+  <button class="btn-main btn-save" onclick="saveAll()">모아서 저장/공유</button>
+</div>
+
+<div class="modal-overlay" id="helpModal" onclick="if(event.target===this) closeHelp()">
+  <div class="modal-box">
+    <h2>📖 사용 설명서</h2>
+
+    <h3>1. 작업 제목 입력</h3>
+    <p>맨 위 칸에 작업 제목을 입력합니다. 오른쪽 🎤 버튼을 누르면 음성으로도 입력할 수 있습니다. (안드로이드 Chrome 권장)</p>
+
+    <h3>2. 사진 촬영 / 업로드</h3>
+    <ul>
+      <li><b>📷 촬영</b> — 카메라가 바로 실행됩니다.</li>
+      <li><b>🖼 업로드</b> — 갤러리에서 여러 장 선택 가능합니다.</li>
+      <li>각 항목마다 사진을 여러 장 추가할 수 있습니다.</li>
+      <li>썸네일 오른쪽 위 <b>×</b> 를 누르면 삭제됩니다.</li>
+    </ul>
+
+    <h3>3. 모아서 저장/공유</h3>
+    <p>버튼을 누르면 다음이 자동으로 처리됩니다.</p>
+    <ol>
+      <li>각 사진 하단에 <b>작업 제목 + 촬영 날짜/시간</b> 워터마크 삽입</li>
+      <li>항목 순서(1→2→3→4)대로 정렬하고 구분 라벨 추가</li>
+      <li>전체를 세로로 이어붙여 <b>이미지 1장</b>으로 합성</li>
+      <li>공유 시트가 열리면 카카오톡 · Teams · 메일 등으로 바로 전송</li>
+    </ol>
+
+    <h3>4. 초기화</h3>
+    <p>입력한 제목과 촬영한 사진을 모두 지웁니다.</p>
+
+    <h3>⚠️ 참고사항</h3>
+    <ul>
+      <li>모든 처리는 <b>휴대폰 안에서만</b> 이루어집니다. 서버로 전송되지 않습니다.</li>
+      <li>브라우저를 <b>닫거나 새로고침하면 사진이 사라집니다.</b> 작업 후 바로 저장해 주세요.</li>
+      <li>워터마크의 제목은 <b>저장 버튼을 누른 시점</b>의 제목이 적용됩니다.</li>
+      <li>사파리에서 <b>홈 화면에 추가</b>하면 앱처럼 사용할 수 있습니다.</li>
+    </ul>
+
+    <h3>🔄 버전 정보</h3>
+    <p id="versionDetail"></p>
+
+    <button class="modal-close" onclick="closeHelp()">닫기</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<canvas id="canvasWork"></canvas>
+
+<script>
+// 업데이트 시 이 값만 바꾸고 파일을 재배포하세요.
+const APP_VERSION = 'v1.4';
+const APP_UPDATED = '2026-08-31';
+
+const CATEGORIES = [
+  { id: 'gas', name: '1. Gas 측정 사진' },
+  { id: 'before', name: '2. Blind 설치 전 사진' },
+  { id: 'after', name: '3. Blind 설치 후 사진' },
+  { id: 'etc', name: '4. 기타' }
+];
+
+// 카테고리별 사진 저장: { id: [ {rawImg: Image객체, ts: 촬영/추가 시각, previewUrl: 썸네일용 원본 dataURL} ] }
+let photos = {};
+CATEGORIES.forEach(c => photos[c.id] = []);
+
+function render() {
+  const list = document.getElementById('categoryList');
+  list.innerHTML = '';
+  CATEGORIES.forEach(cat => {
+    const count = photos[cat.id].length;
+    const div = document.createElement('div');
+    div.className = 'category';
+    div.innerHTML = `
+      <div class="category-title">
+        <span>${cat.name}</span>
+        <span class="badge ${count > 0 ? 'done' : ''}">${count}장</span>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-camera" onclick="triggerInput('${cat.id}', 'camera')">📷 촬영</button>
+        <button class="btn btn-upload" onclick="triggerInput('${cat.id}', 'upload')">🖼 업로드</button>
+      </div>
+      <input type="file" accept="image/*" capture="environment" id="cam_${cat.id}" onchange="handleFile(event, '${cat.id}')">
+      <input type="file" accept="image/*" multiple id="up_${cat.id}" onchange="handleFile(event, '${cat.id}')">
+      <div class="thumbs" id="thumbs_${cat.id}"></div>
+    `;
+    list.appendChild(div);
+    renderThumbs(cat.id);
+  });
+}
+
+function triggerInput(catId, type) {
+  const el = document.getElementById((type === 'camera' ? 'cam_' : 'up_') + catId);
+  el.value = '';
+  el.click();
+}
+
+function handleFile(event, catId) {
+  const files = event.target.files;
+  if (!files || files.length === 0) return;
+
+  Array.from(files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = new Image();
+      img.onload = function() {
+        photos[catId].push({ rawImg: img, ts: Date.now(), previewUrl: e.target.result });
+        renderThumbs(catId);
+        updateBadge(catId);
+        showToast('사진이 추가되었습니다');
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function formatDate(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  return `${y}-${m}-${day} ${hh}:${mm}`;
+}
+
+function renderThumbs(catId) {
+  const wrap = document.getElementById('thumbs_' + catId);
+  wrap.innerHTML = '';
+  photos[catId].forEach((p, idx) => {
+    const t = document.createElement('div');
+    t.className = 'thumb-wrap';
+    t.innerHTML = `<img src="${p.previewUrl}"><button class="thumb-del" onclick="deletePhoto('${catId}', ${idx})">×</button>`;
+    wrap.appendChild(t);
+  });
+}
+
+function deletePhoto(catId, idx) {
+  photos[catId].splice(idx, 1);
+  renderThumbs(catId);
+  updateBadge(catId);
+}
+
+function updateBadge(catId) {
+  render();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => { t.style.display = 'none'; }, 1500);
+}
+
+function openHelp() {
+  document.getElementById('helpModal').classList.add('show');
+}
+
+function closeHelp() {
+  document.getElementById('helpModal').classList.remove('show');
+}
+
+function resetAll() {
+  if (!confirm('모든 사진을 초기화할까요?')) return;
+  CATEGORIES.forEach(c => photos[c.id] = []);
+  document.getElementById('jobTitle').value = '';
+  render();
+}
+
+// ---- 음성 입력 (Web Speech API) ----
+const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognizer = null;
+let isListening = false;
+
+function toggleVoiceInput() {
+  if (!SpeechRecognitionCtor) {
+    alert('이 브라우저는 음성 입력을 지원하지 않습니다. 안드로이드는 Chrome 브라우저 사용을 권장합니다.');
+    return;
+  }
+  if (isListening) {
+    recognizer && recognizer.stop();
+    return;
+  }
+  startVoiceInput();
+}
+
+function startVoiceInput() {
+  recognizer = new SpeechRecognitionCtor();
+  recognizer.lang = 'ko-KR';
+  recognizer.interimResults = false;
+  recognizer.maxAlternatives = 1;
+
+  const micBtn = document.getElementById('micBtn');
+  const titleInput = document.getElementById('jobTitle');
+
+  recognizer.onstart = function() {
+    isListening = true;
+    micBtn.classList.add('listening');
+    showToast('듣고 있어요...');
+  };
+
+  recognizer.onresult = function(event) {
+    const transcript = event.results[0][0].transcript.trim();
+    if (transcript) {
+      titleInput.value = transcript;
+      showToast('입력 완료: ' + transcript);
+    }
+  };
+
+  recognizer.onerror = function(event) {
+    if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+      showToast('마이크 권한을 허용해주세요');
+    } else if (event.error !== 'no-speech' && event.error !== 'aborted') {
+      showToast('음성 인식 오류: ' + event.error);
+    }
+  };
+
+  recognizer.onend = function() {
+    isListening = false;
+    micBtn.classList.remove('listening');
+  };
+
+  recognizer.start();
+}
+
+// 전체 사진을 워터마크 적용 후 세로로 이어붙여 한 장의 이미지로 합성 후 저장/공유
+async function saveAll() {
+  const grouped = CATEGORIES.map(cat => ({
+    cat,
+    items: photos[cat.id]
+  })).filter(g => g.items.length > 0);
+
+  if (grouped.length === 0) {
+    alert('저장할 사진이 없습니다.');
+    return;
+  }
+
+  const title = document.getElementById('jobTitle').value.trim() || '(제목 없음)';
+  // 저장/공유 버튼을 누른 시각으로 모든 워터마크와 파일명을 통일
+  const saveTime = new Date();
+  const saveTimeStr = formatDate(saveTime);
+  showToast('이미지 합성 중...');
+
+  // 공통 폭 결정 (사진 중 가장 큰 폭 기준, 너무 크면 상한)
+  const MAX_WIDTH = 1080;
+  let targetWidth = 0;
+  grouped.forEach(g => g.items.forEach(p => {
+    targetWidth = Math.max(targetWidth, p.rawImg.width);
+  }));
+  targetWidth = Math.min(targetWidth, MAX_WIDTH);
+
+  const labelHeight = Math.round(targetWidth * 0.09);
+  const gap = Math.round(targetWidth * 0.02);
+
+  // 각 사진의 워터마크 적용 + 리사이즈된 canvas를 미리 만들어 전체 높이를 계산
+  const workCanvas = document.getElementById('canvasWork');
+  const workCtx = workCanvas.getContext('2d');
+
+  const renderedSections = []; // { type: 'label'|'photo', height, draw(ctx, y) }
+
+  grouped.forEach(g => {
+    renderedSections.push({ type: 'label', height: labelHeight, catName: g.cat.name });
+    g.items.forEach(p => {
+      const scale = targetWidth / p.rawImg.width;
+      const h = Math.round(p.rawImg.height * scale);
+
+      // 개별 사진에 워터마크(날짜+제목) 입힌 결과를 임시 캔버스에 만든다
+      workCanvas.width = p.rawImg.width;
+      workCanvas.height = p.rawImg.height;
+      workCtx.drawImage(p.rawImg, 0, 0);
+      const barHeight = Math.max(p.rawImg.height * 0.10, 70);
+      workCtx.fillStyle = 'rgba(0,0,0,0.55)';
+      workCtx.fillRect(0, p.rawImg.height - barHeight, p.rawImg.width, barHeight);
+      const baseFontSize = Math.max(p.rawImg.width * 0.032, 18);
+      workCtx.fillStyle = '#ffffff';
+      workCtx.textBaseline = 'middle';
+      workCtx.font = `bold ${baseFontSize}px sans-serif`;
+      workCtx.fillText(title, p.rawImg.width * 0.04, p.rawImg.height - barHeight * 0.62);
+      workCtx.font = `${baseFontSize * 0.8}px sans-serif`;
+      workCtx.fillText(saveTimeStr, p.rawImg.width * 0.04, p.rawImg.height - barHeight * 0.25);
+
+      const snapshot = new Image();
+      snapshot.src = workCanvas.toDataURL('image/jpeg', 0.92);
+      renderedSections.push({ type: 'photo', height: h, img: snapshot, drawWidth: targetWidth });
+    });
+  });
+
+  // 모든 snapshot 이미지가 로드될 때까지 대기
+  await Promise.all(
+    renderedSections
+      .filter(s => s.type === 'photo')
+      .map(s => new Promise(resolve => {
+        if (s.img.complete) resolve();
+        else s.img.onload = resolve;
+      }))
+  );
+
+  const totalHeight = renderedSections.reduce((sum, s) => sum + s.height + gap, 0) + gap;
+
+  const finalCanvas = document.createElement('canvas');
+  finalCanvas.width = targetWidth;
+  finalCanvas.height = totalHeight;
+  const fctx = finalCanvas.getContext('2d');
+  fctx.fillStyle = '#f2f3f5';
+  fctx.fillRect(0, 0, targetWidth, totalHeight);
+
+  let y = gap;
+  renderedSections.forEach(s => {
+    if (s.type === 'label') {
+      fctx.fillStyle = '#2d3436';
+      fctx.fillRect(0, y, targetWidth, s.height);
+      fctx.fillStyle = '#ffffff';
+      fctx.font = `bold ${Math.round(s.height * 0.45)}px sans-serif`;
+      fctx.textBaseline = 'middle';
+      fctx.fillText(s.catName, targetWidth * 0.04, y + s.height / 2);
+    } else {
+      fctx.drawImage(s.img, 0, y, s.drawWidth, s.height);
+    }
+    y += s.height + gap;
+  });
+
+  const finalDataUrl = finalCanvas.toDataURL('image/jpeg', 0.9);
+  const blob = await (await fetch(finalDataUrl)).blob();
+  const safeTitle = title.replace(/[^\w가-힣]/g, '') || '작업사진';
+  const dateForFile = saveTimeStr.replace(/:/g, '').replace(/ /g, '_');
+  const fname = `${safeTitle}_${dateForFile}.jpg`;
+  const file = new File([blob], fname, { type: 'image/jpeg' });
+
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: title });
+      return;
+    } catch (e) {
+      // 사용자가 취소했거나 실패 시 다운로드로 폴백
+    }
+  }
+
+  const url = URL.createObjectURL(file);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fname;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('이미지 저장을 시작합니다');
+}
+
+document.getElementById('versionTag').textContent = APP_VERSION;
+document.getElementById('versionDetail').textContent = `${APP_VERSION} (업데이트: ${APP_UPDATED}) — 새 버전 안내가 오면 이 파일을 다시 받아 교체해 주세요.`;
+
+render();
+</script>
+</body>
+</html>
